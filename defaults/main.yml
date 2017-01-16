@@ -1,0 +1,5 @@
+---
+gvm:
+  user: "{{ ansible_user }}"
+  version: '1.0.22'
+  go_version: go1.6

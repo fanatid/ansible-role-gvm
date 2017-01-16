@@ -1,0 +1,23 @@
+---
+sudo: true
+os: linux
+language: python
+python: "2.7"
+addons:
+  apt:
+    packages:
+      - python-pip
+env:
+  - ANSIBLE_VERSION=2.0.0.0
+  - ANSIBLE_VERSION=2.1.0.0
+  - ANSIBLE_VERSION=2.2.0.0
+install:
+  - pip install ansible==$ANSIBLE_VERSION
+  - ansible --version
+script:
+  - cd tests
+  - ansible-playbook -i inventory-local test.yml
+  - . ~/.profile
+  - go version | grep '1.6'
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/

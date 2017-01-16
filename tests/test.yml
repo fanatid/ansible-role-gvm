@@ -1,0 +1,8 @@
+---
+- hosts: default
+  roles:
+    - role: ansible-role-gvm
+      gvm:
+        user: "{{ ansible_env.USER }}"
+        version: '1.0.22'
+        go_version: go1.6

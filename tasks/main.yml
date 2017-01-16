@@ -1,0 +1,57 @@
+---
+- block:
+  - name: Install dependencies
+    apt: pkg={{ item }} state=present
+    with_items:
+      - git
+      - bison
+      - mercurial
+
+  - block:
+    - name: Try fix installed gvm
+      shell: mv ~/.gvm/git.bak ~/.gvm/.git
+      changed_when: false
+      failed_when: false
+
+    - name: Install gvm {{ gvm.version }}
+      git: repo=https://github.com/moovweb/gvm.git dest=~/.gvm version={{ gvm.version }}
+
+    - name: Create gvm loader
+      blockinfile:
+        dest: ~/.gvm/scripts/gvm
+        create: yes
+        block: |
+          export GVM_ROOT=$HOME/.gvm
+          . $GVM_ROOT/scripts/gvm-default
+
+    - name: Add gvm loader to ~/.profile
+      lineinfile:
+        dest: ~/.profile
+        create: yes
+        line: "[ -s \"$HOME/.gvm/scripts/gvm\" ] && . $HOME/.gvm/scripts/gvm"
+
+    - name: Install go {{ gvm.go_version }}
+      shell: . ~/.profile && gvm install {{ gvm.go_version }} -B
+      args:
+        executable: /bin/bash
+      register: gvm_go_install_result
+      changed_when: "'Already installed!' not in gvm_go_install_result.stdout"
+
+    - name: Check if {{ gvm.go_version }} is the default go version
+      shell: . ~/.profile && gvm list
+      args:
+        executable: /bin/bash
+      register: gvm_check_default
+      changed_when: false
+      failed_when: false
+
+    - name: Set default go version to {{ gvm.go_version }}
+      shell: . ~/.profile && gvm use {{ gvm.go_version }} --default
+      args:
+        executable: /bin/bash
+      when: "'=> {{ gvm.go_version }}' not in gvm_check_default.stdout"
+
+    become_user: "{{ gvm.user }}"
+
+  become: true
+  tags: gvm
